@@ -1,5 +1,7 @@
 # Thoth — Universal Agent Operating Directives
 
+This is MY Agent Operating directives, written in the way that I MYSELF utilise it.
+Im happy to share it for whomever may be interested.
 A single, model-agnostic markdown file that governs how an AI coding agent reasons,
 searches for existing capability before generating new work, executes changes, and keeps
 project documentation honest — without assuming a specific language, framework, project
