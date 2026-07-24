@@ -8,7 +8,7 @@
 > Synthesized from Anthropic's prompting best practices, Google's Gemini agentic prompting
 > strategies, OpenAI's reasoning-model guidance, and the obra/superpowers agent methodology.
 >
-> **Version**: 1.2.2 — see §12 Changelog.
+> **Version**: 1.3.0
 
 ---
 
@@ -235,6 +235,12 @@ state that have not been opened, read, or queried in this session. Genuine uncer
 conversation is fine to express — "I haven't checked, but it's likely..." — it is not
 acceptable as the basis for an action with side effects.
 
+**Verify by execution, not by report.** When reviewing another agent's or subagent's
+work, reproduce the claimed results yourself: re-run the tests and verification commands,
+recompute the math by hand, and hunt for tests that pass vacuously. A report of passing
+output is a lead, not evidence — evidence is output you produced. This applies doubly
+when the reviewer is you and the implementer is a subagent you dispatched (§9.1).
+
 ---
 
 ## 6. Execution Discipline
@@ -340,11 +346,19 @@ suspended by explicit instruction.
 3. **Plan.** Break the design into discrete, independently verifiable tasks — small enough
    that each takes minutes, not hours. Record exact file paths and verification steps per
    task. A plan that an informed but context-free engineer could execute correctly,
-   without asking follow-up questions, is the bar.
+   without asking follow-up questions, is the bar. Pin interface contracts (signatures,
+   types, cross-task semantics) and the behaviors each task must prove — but do not write
+   implementation bodies into plans: plans that pre-write code lead executors to paste the
+   snippet and stop, producing skeletons instead of finished work. Every task names its
+   exact verification commands. Tasks are **vertical slices**, not horizontal layers:
+   each one delivers end-to-end usable value (implementation + tests + doc updates), never
+   a cross-cutting stratum like "all the types, then all the logic" that yields nothing
+   verifiable until the last task.
 
 4. **Execute.** Work through tasks systematically. Use fresh subagents for independent
    workstreams when isolation matters (see §9); otherwise work directly. After each task,
-   check against the plan.
+   run that task's verification commands yourself and check the result against the plan —
+   "done" is unambiguous only when the command list is explicit and green.
 
 5. **Test-driven implementation.** RED (write a failing test for the new behavior) →
    GREEN (minimal code to pass it) → REFACTOR → commit. Code written before its test
@@ -356,7 +370,9 @@ suspended by explicit instruction.
 
 7. **Finish.** Once all tasks are complete and the test baseline holds, present completion
    options (merge, open PR, keep branch, discard) and clean up the isolated workspace per
-   §6.5.
+   §6.5. For work with rendered or visual output, the merge gate includes a human
+   eyeball pass: automated checks prove geometry and state, not whether it looks right —
+   the human reviews the actual output before the work is called done.
 
 The philosophy underlying this workflow: systematic over ad-hoc, complexity reduction as
 a primary goal, evidence over claims. "It's fixed" means the verification was run, not
@@ -383,6 +399,48 @@ Work directly — do not delegate — when:
 
 Reserve delegation for cases where isolation *changes the quality* of the output, not
 for cases where it merely distributes the work.
+
+### 9.1 Context Curation for Subagents
+
+When dispatching a subagent, do not dump conversation history into it. Hand it a curated
+bundle: the full task text verbatim (from the plan), the interface contracts it must
+match (including adjacent tasks'), the AGENTS.md chain for the paths it will touch, the
+exact files it may modify, the verification battery to run, and the relevant spec or
+design snapshot. Fresh context means zero prior conversation; resumed context is only
+for fix cycles (§9.2). A subagent that has to guess its scope will guess wrong.
+
+### 9.2 Reviewing Delegated Work
+
+Every implementer subagent's deliverable is reviewed before work continues — delegation
+without review is just unverified generation at arm's length. The loop that has proven
+out in practice:
+
+1. **Spec-compliance review, by a fresh reviewer subagent.** It reads the actual code —
+   never the implementer's report — and re-runs the verification commands itself (§5's
+   verify-by-execution). It checks three things: anything requested that is missing,
+   anything built that was not requested, and anything interpreted differently than
+   intended.
+2. **Quality review, by a fresh reviewer subagent.** Severity-calibrated
+   (Critical/Important/Minor): correctness risks, downstream fit for the tasks that will
+   build on this one, test quality (do the tests prove behavior, or would they pass
+   vacuously?). Critical and Important findings block the next task.
+3. **Fix cycles.** Findings go back to the *same* implementer subagent (resume it, so it
+   keeps its context) rather than to a fresh one or to manual fixes by the controller.
+   The reviewer re-reviews after each fix round. Only when both stages approve does the
+   next task begin.
+4. **Milestone close.** One fresh reviewer audits the cumulative diff of the whole body
+   of work: full verification battery re-run, stub/skeleton audit (no `todo!`, no
+   placeholder bodies, no ignored inputs), and a constraint audit against the project's
+   standing rules (see §13 and any local contracts).
+
+### 9.3 Artifact Atomicity & Cold Resume
+
+Every task-completing commit atomically updates all of its artifacts in the same commit:
+the spec (if clarified), the plan (task marked done, deviations noted), the roadmap or
+progress notes, and the AGENTS.md chain (whenever behavior, structure, or contracts
+changed — §13.3). This is what makes a fresh context able to resume cold per §7.3 with
+no memory loss: the repository itself is the state, not the conversation that produced
+it. A task is not done when its code commits; it is done when its artifacts agree.
 
 ---
 
@@ -458,46 +516,18 @@ Before declaring a task complete:
 | Cryptic naming | §14.3 | Files, modules, or functions named for brevity over discoverability |
 | Deferred hyper-local DOX | §14.4 | New architectural boundary created without its local AGENTS.md landing in the same change |
 | Legacy rewrite creep | §14.5 | Full restructure attempted on unstructured legacy code instead of walling off a perimeter around the actual change |
-
----
-
-## 12. Changelog
-
-- **1.0.0** — Full rewrite. Removed all harness-specific sections (loading mechanics,
-  per-harness placement tables, harness adapter appendix). Removed provider-specific
-  calibration tables. All directives are now written directly to the agent, universally,
-  with no runtime-specific assumptions. Renumbered §1–§12.
-- **1.1.0** — Formalized §13 (DOX: Project Structure & Documentation Hierarchy). Previously
-  an unstructured "Additionals" appendix with a bare H1 and no subsection numbering; now
-  conforms to the document's standard §X.Y format with proper divider placement. Cross-linked
-  DOX's read/update steps to §1 (precedence — child docs refine, never weaken, parent rules),
-  §6.3 (anti-overengineering — do not create child docs reflexively), §7.3 (fresh-context
-  bootstrap — DOX re-read is a specific instance of it), and §11.2 (pre-completion self-check
-  — DOX consistency folds into it, not a separate gate). Added a DOX-drift row to the §11.3
-  failure taxonomy.
-- **1.2.0** — Added §14 (Codebase Structural Integrity): isolation-by-default at every new
-  boundary, topological organization for flow-shaped systems, discoverability-first naming,
-  hyper-local DOX creation at the moment a boundary is created (extends §13.5 forward in
-  time rather than replacing it), legacy containment via perimeter instead of rewrite, and
-  fast feedback as a precondition for relying on isolation at all. Added four rows to the
-  §11.3 failure taxonomy.
-- **1.2.1** — Corrected §14 drift: an earlier pass had illustrated its examples with one
-  specific project domain (hypervisors, debuggers, trading engines) and one specific
-  language's tooling (Rust: crate, `.rs` files, `cargo check`, COM-surface terminology).
-  Replaced all of these in §14.1–§14.4 and §14.6 with domain- and language-neutral
-  equivalents. No change to the underlying principles, section structure, or §11.3 failure
-  taxonomy — this is a genericization pass only.
-- **1.2.2** — §14.3 and §14.4 still needed one concrete example each to demonstrate their
-  point (a name can't illustrate discoverability without some semantic content). Flagged
-  both explicitly as illustrative placeholders, not facts about this project's domain, so a
-  fresh context window reading this file doesn't infer a business domain from an example
-  chosen only to demonstrate a naming or documentation pattern.
+| Trust-without-re-execution | §9.2, §5 | Reviewer accepted an implementer's claimed results without re-running the verification battery |
+| Vacuous test | §9.2 | Test passes regardless of implementation (no assertion, trivially true, exercises none of the logic it claims to pin) |
+| Skeleton leak | §9.2 | `todo!`, `unimplemented!`, empty body, or placeholder left in committed code past its task |
+| Inline code in plan | §8.3 | Plan contained implementation bodies; executor pasted them and stopped, producing a skeleton |
+| Context dump | §9.1 | Subagent given full chat history instead of a curated bundle, polluting its output |
+| Vertical slice violation | §8.3 | Task delivered a horizontal layer with nothing independently verifiable until later tasks land |
 
 ---
 
 ## 13. Project Structure & Documentation Hierarchy (DOX)
 
-§§1–12 govern how you reason and act, generically, in any repository. This section governs
+§§1–11 govern how you reason and act, generically, in any repository. This section governs
 how *this* project's structure is documented and kept current: DOX, the AGENTS.md hierarchy
 installed here. DOX is binding, not advisory — treat every AGENTS.md in the tree as a work
 contract for its subtree, per §1's precedence rule (closer-to-cwd overrides root, but
