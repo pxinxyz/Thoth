@@ -1,69 +1,55 @@
-# Thoth — Universal Agent Operating Directives
+# Thoth
 
-This is MY Agent Operating directives, written in the way that I MYSELF utilise it.
-Im happy to share it for whomever may be interested.
+<p align="center">
+  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-4c566a" alt="License: MIT"></a>
+</p>
 
-A single, model-agnostic markdown file that governs how an AI coding agent reasons,
-searches for existing capability before generating new work, executes changes, and keeps
-project documentation honest — without assuming a specific language, framework, project
-domain, or harness.
+Thoth contains the operating directives I use with AI coding agents.
+The directives live in [`AGENTS.md`](AGENTS.md).
 
-Drop it at the root of a repository (or reference it from your global agent config) and
-any agent that reads project-level instructions — Claude Code, Cursor, Windsurf, Copilot,
-or similar — inherits the same operating discipline.
+The file defines how an agent checks instructions, uses available tools, changes files, and maintains project documentation.
+The file does not prescribe a programming language or application framework.
 
-## What it actually does
+## Directives
 
-- **Stops the agent from guessing when an answer already exists.** Before generating
-  anything from scratch, the agent has to check: explicit instructions, existing project
-  resources (docs, schemas, code), available Skills, and connected tools/MCP servers — in
-  that order — and say so when it skips a step.
-- **Gives it a decision hierarchy instead of vibes.** A fixed order for resolving
-  conflicting instructions, and a "stop at first match" rule for choosing between a Skill,
-  a tool, or plain generation, so the same request resolves the same way twice.
-- **Makes self-review checkable, not just claimed.** A named failure taxonomy (blind
-  generation, hallucinated absence, silent default, scope creep, test-shaped solutions,
-  and more) the agent can audit its own output against, instead of a vague "did I do a
-  good job" pass.
-- **Keeps long-running and multi-session work coherent.** Rules for structured vs.
-  unstructured state, git as a checkpoint mechanism, and how to re-orient after a context
-  reset without re-litigating settled decisions.
-- **Documents the project as it changes.** A [DOX framework](https://github.com/agent0ai/dox)
-  (documentation hierarchy) that keeps a chain of `AGENTS.md` files current as the codebase
-  grows — parent docs own broad rules, child docs own local specifics, and both get updated
-  as part of finishing the work, not as an afterthought.
-- **Enforces structural discipline on autonomous multi-file changes.** Isolation-by-default
-  at new boundaries, topological organization for flow-shaped systems, discoverable naming,
-  and a documented perimeter around legacy code instead of a risky one-shot rewrite.
+- The agent checks project resources before generating a solution.
+- The agent checks available skills and tools before choosing an approach.
+- The agent follows an explicit order when instructions conflict.
+- The agent verifies claims against files, tool output, or execution results.
+- The agent uses Git and progress records to preserve work across sessions.
+- The agent checks its work against named failure categories.
+- The agent maintains a hierarchy of project and directory instructions.
+- The agent limits changes to the requested scope.
 
-## Design principles
+## Use
 
-- **Written to the agent, not about it.** Every line is a behavioral instruction, not a
-  configuration note or deployment guide.
-- **Deliberately domain- and language-neutral.** Where an example is unavoidable, it's
-  flagged as illustrative so a fresh context window doesn't mistake it for a fact about
-  your actual project.
-- **Versioned and self-correcting.** The file carries its own changelog (§12) and expects
-  corrections to be recorded there when drift is found — the same way a codebase tracks
-  its own history.
+Copy `AGENTS.md` into the root of your project.
+Configure your coding agent to read that file.
+The configuration method depends on the agent.
 
-## Usage
+Read the directives before adopting them.
+Adapt project requirements and local constraints to your repository.
+The file provides instructions; the agent must still follow them correctly.
 
-Copy `AGENTS.md` into the root of your project. That's it — no build step, no
-configuration. Add subtree-specific `AGENTS.md` files as your project grows, per §13
-(the [DOX framework](https://github.com/agent0ai/dox)) and §14.4 (hyper-local docs at
-boundary creation).
+## Documentation structure
 
-## Works alone, better together
+Thoth includes a documentation hierarchy based on [DOX](https://github.com/agent0ai/dox).
+The root `AGENTS.md` owns project requirements.
+Directory `AGENTS.md` files own requirements for their directories.
+The parent file indexes its child files.
 
-This file governs *reasoning and behavior*. It's fully functional on its own, but it's
-written to complement — not duplicate — a dedicated skills framework. It's intended and
-preferred to be used alongside
-[obra/superpowers](https://github.com/obra/superpowers), which supplies the
-procedural playbooks this file's Skill-check step (§2, §3) is designed to find and defer
-to.
+Sections 13 and 14 describe this structure and its maintenance requirements.
 
-## Status
+## Skills
 
-Actively maintained and corrected against real usage. See the file's own §12 Changelog
-for version history.
+Thoth defines operating rules for the agent.
+A skills framework supplies procedures for specific tasks.
+Thoth can work alongside [Superpowers](https://github.com/obra/superpowers) or another skills framework.
+
+## Version
+
+`AGENTS.md` declares version `1.3.0`.
+
+## License
+
+The [MIT license](LICENSE) covers this project.
